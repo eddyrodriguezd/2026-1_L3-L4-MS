@@ -1,0 +1,507 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: Users CRUD API with Python Lambdas and DynamoDB
+
+Resources:
+  #############
+  # DynamoDB
+  #############
+
+  # Tables
+  L3L4UsersTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: L3_L4_Users
+      AttributeDefinitions:
+        - AttributeName: UserId
+          AttributeType: S
+      KeySchema:
+        - AttributeName: UserId
+          KeyType: HASH
+      BillingMode: PAY_PER_REQUEST
+
+  #############
+  # API Gateway
+  #############
+
+  # IAM Roles
+
+  # API
+  ApiGateway:
+    Type: AWS::ApiGateway::RestApi
+    Properties:
+      Name: L3_L4_API
+      Description: API for Laboratories 3-4
+      EndpointConfiguration:
+        Types: [REGIONAL]
+
+  # IAM Roles
+  ApiGatewayExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: L3L4UsersApiGatewayExecutionRole
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: apigateway.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: InvokeLambdaFunctions
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - lambda:InvokeFunction
+                Resource:
+                  - !GetAtt CreateUserLambdaFunction.Arn
+                  - !GetAtt GetUsersLambdaFunction.Arn
+                  - !GetAtt GetUserByIdLambdaFunction.Arn
+                  - !GetAtt UpdateUserLambdaFunction.Arn
+                  - !GetAtt DeleteUserLambdaFunction.Arn
+
+  # API Key
+  APIKey:
+    Type: AWS::ApiGateway::ApiKey
+    Properties:
+      Name: L3_L4 API Key for Students
+      Enabled: true
+      Description: API Key for L3_L4 API
+
+  APIUsagePlan:
+    DependsOn: ApiGatewayDeployment
+    Type: AWS::ApiGateway::UsagePlan
+    Properties:
+      ApiStages:
+        - ApiId: !Ref ApiGateway
+          Stage: live
+      Description: Usage plan for L3_L4 API
+      Quota:
+        Limit: 10000
+        Period: MONTH
+      Throttle:
+        BurstLimit: 5
+        RateLimit: 2
+
+  APIUsagePlanKey:
+    Type: AWS::ApiGateway::UsagePlanKey
+    Properties:
+      KeyId: !Ref APIKey
+      KeyType: API_KEY
+      UsagePlanId: !Ref APIUsagePlan
+
+  # Resources
+  UsersApiResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      ParentId: !GetAtt ApiGateway.RootResourceId
+      PathPart: users
+      RestApiId: !Ref ApiGateway
+
+  UsersUserIdApiResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      ParentId: !Ref UsersApiResource
+      PathPart: "{userId}"
+      RestApiId: !Ref ApiGateway
+
+  # Methods
+  CreateUserApiMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      ApiKeyRequired: true
+      AuthorizationType: NONE
+      HttpMethod: POST
+      Integration:
+        IntegrationHttpMethod: POST
+        Type: AWS_PROXY
+        Credentials: !GetAtt ApiGatewayExecutionRole.Arn
+        Uri: !Sub
+          - arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${LambdaArn}/invocations
+          - LambdaArn: !GetAtt CreateUserLambdaFunction.Arn
+      ResourceId: !Ref UsersApiResource
+      RestApiId: !Ref ApiGateway
+
+  GetUsersApiMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      ApiKeyRequired: true
+      AuthorizationType: NONE
+      HttpMethod: GET
+      Integration:
+        IntegrationHttpMethod: POST
+        Type: AWS_PROXY
+        Credentials: !GetAtt ApiGatewayExecutionRole.Arn
+        Uri: !Sub
+          - arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${LambdaArn}/invocations
+          - LambdaArn: !GetAtt GetUsersLambdaFunction.Arn
+      ResourceId: !Ref UsersApiResource
+      RestApiId: !Ref ApiGateway
+
+  GetUserByIdApiMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      ApiKeyRequired: true
+      AuthorizationType: NONE
+      HttpMethod: GET
+      Integration:
+        IntegrationHttpMethod: POST
+        Type: AWS_PROXY
+        Credentials: !GetAtt ApiGatewayExecutionRole.Arn
+        Uri: !Sub
+          - arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${LambdaArn}/invocations
+          - LambdaArn: !GetAtt GetUserByIdLambdaFunction.Arn
+      ResourceId: !Ref UsersUserIdApiResource
+      RestApiId: !Ref ApiGateway
+
+  UpdateUserApiMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      ApiKeyRequired: true
+      AuthorizationType: NONE
+      HttpMethod: PUT
+      Integration:
+        IntegrationHttpMethod: POST
+        Type: AWS_PROXY
+        Credentials: !GetAtt ApiGatewayExecutionRole.Arn
+        Uri: !Sub
+          - arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${LambdaArn}/invocations
+          - LambdaArn: !GetAtt UpdateUserLambdaFunction.Arn
+      ResourceId: !Ref UsersUserIdApiResource
+      RestApiId: !Ref ApiGateway
+
+  DeleteUserApiMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      ApiKeyRequired: true
+      AuthorizationType: NONE
+      HttpMethod: DELETE
+      Integration:
+        IntegrationHttpMethod: POST
+        Type: AWS_PROXY
+        Credentials: !GetAtt ApiGatewayExecutionRole.Arn
+        Uri: !Sub
+          - arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${LambdaArn}/invocations
+          - LambdaArn: !GetAtt DeleteUserLambdaFunction.Arn
+      ResourceId: !Ref UsersUserIdApiResource
+      RestApiId: !Ref ApiGateway
+
+  # Deployment
+  ApiGatewayDeployment:
+    Type: AWS::ApiGateway::Deployment
+    DependsOn:
+      - CreateUserApiMethod
+      - GetUsersApiMethod
+      - GetUserByIdApiMethod
+      - UpdateUserApiMethod
+      - DeleteUserApiMethod
+    Properties:
+      RestApiId: !Ref ApiGateway
+      StageName: live
+
+  ########
+  # Lambda
+  ########
+
+  # Functions
+  CreateUserLambdaFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: L3_L4_Users_Create
+      Runtime: python3.8
+      Handler: index.lambda_handler
+      Role: !GetAtt UserCRUDLambdaRole.Arn
+      Code:
+        ZipFile: |
+          import json
+          import boto3
+          import uuid
+
+          dynamodb = boto3.resource('dynamodb')
+          table = dynamodb.Table('L3_L4_Users')
+
+          def lambda_handler(event, context):
+              try:
+                  print("Received event:", event)
+                  
+                  if 'body' in event:
+                      try:
+                          body = json.loads(event['body'])
+                          print("Parsed body:", body)
+                          
+                          email = body.get('email')
+                          surname = body.get('surname')
+                          givenName = body.get('givenName')
+                          
+                          if not email:
+                              return {
+                                  "statusCode": 400,
+                                  "body": json.dumps({"error": "Email is required"})
+                              }
+                          if not surname:
+                              return {
+                                  "statusCode": 400,
+                                  "body": json.dumps({"error": "Surname is required"})
+                              }
+                          if not givenName:
+                              return {
+                                  "statusCode": 400,
+                                  "body": json.dumps({"error": "GivenName is required"})
+                              }
+
+                          userId = str(uuid.uuid4())
+
+                          item = {
+                              "UserId": userId,
+                              "Email": email,
+                              "Surname": surname,
+                              "GivenName": givenName
+                          }
+
+                          table.put_item(Item=item)
+
+                          return {
+                              "statusCode": 201,
+                              "body": json.dumps({"message": "User created successfully", "userId": userId})
+                          }
+                          
+                      except json.JSONDecodeError as e:
+                          print("Error decoding JSON:", str(e))
+                          return {
+                              "statusCode": 400,
+                              "body": json.dumps({"error": "Invalid JSON data"})
+                          }
+                  
+                  else:
+                      print("No 'body' in the event")
+                      return {
+                          "statusCode": 400,
+                          "body": json.dumps({"error": "Request body is missing"})
+                      }
+                  
+              except Exception as e:
+                  print("An error occurred:", str(e))
+                  return {
+                      "statusCode": 500,
+                      "body": json.dumps({"error": "Internal server error"})
+                  }
+
+  GetUsersLambdaFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: L3_L4_Users_GetAll
+      Runtime: python3.8
+      Handler: index.lambda_handler
+      Role: !GetAtt UserCRUDLambdaRole.Arn
+      Code:
+        ZipFile: |
+          import json
+          import boto3
+
+          dynamodb = boto3.resource('dynamodb')
+          table = dynamodb.Table('L3_L4_Users')
+
+          def lambda_handler(event, context):
+              print("Received event:", event)
+              try:
+                  response = table.scan()
+                  items = response['Items']
+                  camelcase_items = [
+                    {
+                        "userId": item["UserId"],
+                        "givenName": item["GivenName"],
+                        "surname": item["Surname"],
+                        "email": item["Email"]
+                    }
+                    for item in items
+                  ]
+                  
+                  return {
+                      "statusCode": 200,
+                      "body": json.dumps(camelcase_items)
+                  }
+              except Exception as e:
+                  return {
+                      "statusCode": 500,
+                      "body": json.dumps({"error": "Internal server error"})
+                  }
+
+  GetUserByIdLambdaFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: L3_L4_Users_GetById
+      Runtime: python3.8
+      Handler: index.lambda_handler
+      Role: !GetAtt UserCRUDLambdaRole.Arn
+      Code:
+        ZipFile: |
+          import json
+          import boto3
+
+          dynamodb = boto3.resource('dynamodb')
+          table = dynamodb.Table('L3_L4_Users')
+
+          def lambda_handler(event, context):
+              try:
+                  user_id = event['pathParameters']['userId']
+                  response = table.get_item(Key={"UserId": user_id})
+                  item = response.get('Item')
+                  if item:
+                      camelcase_item = {
+                          "userId": item["UserId"],
+                          "givenName": item["GivenName"],
+                          "surname": item["Surname"],
+                          "email": item["Email"]
+                      }
+                      return {
+                          "statusCode": 200,
+                          "body": json.dumps(camelcase_item)
+                      }
+                  else:
+                      return {
+                          "statusCode": 404,
+                          "body": json.dumps({"error": "User not found"})
+                      }
+              except Exception as e:
+                  return {
+                      "statusCode": 500,
+                      "body": json.dumps({"error": "Internal server error"})
+                  }
+
+  UpdateUserLambdaFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: L3_L4_Users_Update
+      Runtime: python3.8
+      Handler: index.lambda_handler
+      Role: !GetAtt UserCRUDLambdaRole.Arn
+      Code:
+        ZipFile: |
+          import json
+          import boto3
+
+          dynamodb = boto3.resource('dynamodb')
+          table = dynamodb.Table('L3_L4_Users')
+
+          def lambda_handler(event, context):
+              try:
+                  user_id = event['pathParameters']['userId']
+                  body = json.loads(event['body'])
+                  
+                  # Check if user exists
+                  response = table.get_item(Key={"UserId": user_id})
+                  if 'Item' not in response:
+                      return {
+                          "statusCode": 404,
+                          "body": json.dumps({"error": "User not found"})
+                      }
+                  
+                  response = table.update_item(
+                      Key={"UserId": user_id},
+                      UpdateExpression="SET Email = :email, Surname = :surname, GivenName = :givenName",
+                      ExpressionAttributeValues={
+                          ':email': body['email'],
+                          ':surname': body['surname'],
+                          ':givenName': body['givenName']
+                      },
+                      ReturnValues="ALL_NEW"  # Return the updated attributes
+                  )
+                  
+                  updated_user = {
+                      "givenName": response['Attributes']['GivenName'],
+                      "surname": response['Attributes']['Surname'],
+                      "email": response['Attributes']['Email']
+                  }
+
+                  return {
+                      "statusCode": 200,
+                      "body": json.dumps({"message": "User updated successfully", "user": updated_user})
+                  }
+              except Exception as e:
+                  return {
+                      "statusCode": 500,
+                      "body": json.dumps({"error": "Internal server error"})
+                  }
+
+  DeleteUserLambdaFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: L3_L4_Users_Delete
+      Runtime: python3.8
+      Handler: index.lambda_handler
+      Role: !GetAtt UserCRUDLambdaRole.Arn
+      Code:
+        ZipFile: |
+          import json
+          import boto3
+
+          dynamodb = boto3.resource('dynamodb')
+          table = dynamodb.Table('L3_L4_Users')
+
+          def lambda_handler(event, context):
+              try:
+                  user_id = event['pathParameters']['userId']
+                  
+                  # Check if user exists
+                  response = table.get_item(Key={"UserId": user_id})
+                  if 'Item' not in response:
+                      return {
+                          "statusCode": 404,
+                          "body": json.dumps({"error": "User not found"})
+                      }
+                  
+                  response = table.delete_item(Key={"UserId": user_id})
+                  return {
+                      "statusCode": 200,
+                      "body": json.dumps({"message": "User deleted successfully"})
+                  }
+              except Exception as e:
+                  return {
+                      "statusCode": 500,
+                      "body": json.dumps({"error": "Internal server error"})
+                  }
+
+  UserCRUDLambdaRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: UserCRUDLambdaRole
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Policies:
+        - PolicyName: DynamoDBAccess
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - dynamodb:*
+                Resource: !GetAtt L3L4UsersTable.Arn
+
+Outputs:
+  L3L4UsersTableArn:
+    Value: !GetAtt L3L4UsersTable.Arn
+    Description: ARN of the L3_L4_Users DynamoDB table
+  APIKey:
+    Value: !Ref APIKey
+    Description: API Key for CRUD API
+  APIEndpoint:
+    Value: !Sub "https://${ApiGateway}.execute-api.${AWS::Region}.amazonaws.com"
+    Description: Endpoint URL of the API Gateway
+  APIGatewayId:
+    Value: !Ref ApiGateway
+    Description: Id of the API Gateway
+    Export:
+      Name: L3L4-Users-APIGatewayId
+  APIGatewayRootResourceId:
+    Value: !GetAtt ApiGateway.RootResourceId
+    Description: Root Resource Id of the API Gateway
+    Export:
+      Name: L3L4-Users-APIGatewayRootResourceId

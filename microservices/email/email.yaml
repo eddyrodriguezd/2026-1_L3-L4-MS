@@ -1,0 +1,162 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: Email Sending Lambda and API Gateway Endpoint
+
+Resources:
+  ############################
+  # Simple Email Service (SES)
+  ############################
+  SESIdentity:
+    Type: AWS::SES::EmailIdentity
+    Properties:
+      EmailIdentity: eddyrodriguezdlc@gmail.com
+
+  ########
+  # Lambda
+  ########
+
+  # Functions
+  SendEmailLambdaFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: L3_L4_SendEmail
+      Runtime: nodejs16.x
+      Handler: index.handler
+      Role: !GetAtt SendEmailLambdaRole.Arn
+      Code:
+        ZipFile: |
+          const AWS = require('aws-sdk');
+          const ses = new AWS.SES();
+
+          exports.handler = async (event) => {
+              try {
+                  console.log("Received event: " +  JSON.stringify(event));
+                  const body = JSON.parse(event.body);
+                  console.log("Parsed body: " + JSON.stringify(body));
+
+                  const recipient = body.recipient;
+                  const subject = body.subject;
+                  const emailBody = body.body;
+                  
+                  if (!recipient || !subject || !emailBody) {
+                      return {
+                          statusCode: 400,
+                          body: JSON.stringify({ error: "Recipient, subject, and body are required" })
+                      };
+                  }
+
+                  const params = {
+                      Destination: {
+                          ToAddresses: [recipient]
+                      },
+                      Message: {
+                          Body: {
+                              Text: {
+                                  Data: emailBody
+                              }
+                          },
+                          Subject: {
+                              Data: subject
+                          }
+                      },
+                      Source: "eddyrodriguezdlc@gmail.com"
+                  };
+
+                  await ses.sendEmail(params).promise();
+
+                  return {
+                      statusCode: 200,
+                      body: JSON.stringify({ message: "Email sent successfully" })
+                  };
+              } 
+              catch (error) {
+                  console.log("Error: " + JSON.stringify(error));
+                  return {
+                      statusCode: 500,
+                      body: JSON.stringify({ error: "Internal server error" })
+                  };
+              }
+          }
+
+  # IAM Roles
+  SendEmailLambdaRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: SendEmailLambdaRole
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Policies:
+        - PolicyName: SESAccess
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - ses:SendEmail
+                Resource: "*"
+
+  #############
+  # API Gateway
+  #############
+
+  # IAM Roles
+  ApiGatewayExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: L3L4EmailApiGatewayExecutionRole
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: apigateway.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: InvokeLambdaFunctions
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - lambda:InvokeFunction
+                Resource:
+                  - !GetAtt SendEmailLambdaFunction.Arn
+
+  # Resources
+  EmailApiResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      ParentId: !ImportValue L3L4-Users-APIGatewayRootResourceId
+      PathPart: email
+      RestApiId: !ImportValue L3L4-Users-APIGatewayId
+
+  EmailSendApiResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      ParentId: !Ref EmailApiResource
+      PathPart: send
+      RestApiId: !ImportValue L3L4-Users-APIGatewayId
+
+  # Methods
+  SendEmailApiMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      AuthorizationType: NONE
+      HttpMethod: POST
+      Integration:
+        IntegrationHttpMethod: POST
+        Type: AWS_PROXY
+        Credentials: !GetAtt ApiGatewayExecutionRole.Arn
+        Uri: !Sub
+          - arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${LambdaArn}/invocations
+          - LambdaArn: !GetAtt SendEmailLambdaFunction.Arn
+      ResourceId: !Ref EmailSendApiResource
+      RestApiId: !ImportValue L3L4-Users-APIGatewayId
+      RequestParameters:
+        method.request.header.Content-Type: "'application/json'"

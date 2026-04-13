@@ -1,0 +1,23 @@
+# Ignore all HELP.md files
+HELP.md
+
+# Ignore target directories in all projects
+target/
+
+# Keep the Maven wrapper JAR
+!.mvn/wrapper/maven-wrapper.jar
+
+# Ignore target directories within src/main/ and src/test/ for all projects
+!**/src/main/**/target/
+!**/src/test/**/target/
+
+### IntelliJ IDEA ###
+# Ignore IntelliJ IDEA project files
+.idea
+*.iws
+*.iml
+*.ipr
+
+### VS Code ###
+# Ignore VS Code settings
+.vscode/

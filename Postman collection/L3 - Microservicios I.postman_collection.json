@@ -1,0 +1,391 @@
+{
+	"info": {
+		"_postman_id": "bbbc29da-fa14-4d67-b2da-e9cb5c36a54b",
+		"name": "L3 - Microservicios I",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "14840399"
+	},
+	"item": [
+		{
+			"name": "Users",
+			"item": [
+				{
+					"name": "[C] Crear usuario",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "x-api-key",
+								"value": "{{API_KEY}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"email\": \"e.rodriguezd@pucp.edu.pe\",\r\n    \"givenName\": \"Eddy\",\r\n    \"surname\": \"Rodriguez\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{API_URL}}/users",
+							"host": [
+								"{{API_URL}}"
+							],
+							"path": [
+								"users"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "[R] Obtener todos los usuarios",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "x-api-key",
+								"value": "{{API_KEY}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{API_URL}}/users",
+							"host": [
+								"{{API_URL}}"
+							],
+							"path": [
+								"users"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "[R] Obtener usuario por id",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "x-api-key",
+								"value": "{{API_KEY}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{API_URL}}/users/:user_id",
+							"host": [
+								"{{API_URL}}"
+							],
+							"path": [
+								"users",
+								":user_id"
+							],
+							"variable": [
+								{
+									"key": "user_id",
+									"value": "73ae9b30-780f-4ebf-a353-4b54a882875c"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "[U] Actualizar usuario",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "x-api-key",
+								"value": "{{API_KEY}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"email\": \"e.rodriguezd@pucp.edu.pe\",\r\n    \"givenName\": \"Eddy\",\r\n    \"surname\": \"Rodriguez\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{API_URL}}/users/:user_id",
+							"host": [
+								"{{API_URL}}"
+							],
+							"path": [
+								"users",
+								":user_id"
+							],
+							"variable": [
+								{
+									"key": "user_id",
+									"value": "73ae9b30-780f-4ebf-a353-4b54a882875c"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "[D] Eliminar usuario",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "x-api-key",
+								"value": "{{API_KEY}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{API_URL}}/users/:user_id",
+							"host": [
+								"{{API_URL}}"
+							],
+							"path": [
+								"users",
+								":user_id"
+							],
+							"variable": [
+								{
+									"key": "user_id",
+									"value": "73ae9b30-780f-4ebf-a353-4b54a882875c"
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Email",
+			"item": [
+				{
+					"name": "Enviar correo",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "x-api-key",
+								"value": "{{API_KEY}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"recipient\": \"e.rodriguezd@pucp.edu.pe\",\r\n    \"subject\": \"Correo de Prueba\",\r\n    \"body\": \"Este es un correo de prueba\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{API_URL}}/email/send",
+							"host": [
+								"{{API_URL}}"
+							],
+							"path": [
+								"email",
+								"send"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Accounts",
+			"item": [
+				{
+					"name": "[C] Crear cuenta",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "x-api-key",
+								"value": "{{API_KEY}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"userId\": \"4e5dc950-643b-49c8-a9c8-d800f42fb860\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{API_LOCAL_URL_8080}}/accounts",
+							"host": [
+								"{{API_LOCAL_URL_8080}}"
+							],
+							"path": [
+								"accounts"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "[R] Obtener todas las cuentas",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "x-api-key",
+								"value": "{{API_KEY}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{API_LOCAL_URL_8080}}/accounts",
+							"host": [
+								"{{API_LOCAL_URL_8080}}"
+							],
+							"path": [
+								"accounts"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "[R] Obtener cuenta por id",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "x-api-key",
+								"value": "{{API_KEY}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "http://localhost:8081/accounts/:account_id",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8081",
+							"path": [
+								"accounts",
+								":account_id"
+							],
+							"variable": [
+								{
+									"key": "account_id",
+									"value": "1"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "[U] Actualizar cuenta",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "x-api-key",
+								"value": "{{API_KEY}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"balance\": \"200\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{API_LOCAL_URL_8080}}/accounts/:account_id",
+							"host": [
+								"{{API_LOCAL_URL_8080}}"
+							],
+							"path": [
+								"accounts",
+								":account_id"
+							],
+							"variable": [
+								{
+									"key": "account_id",
+									"value": "94a2c51c-e6cf-4956-a6dd-2b3b324ea084"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "[D] Eliminar cuenta",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "x-api-key",
+								"value": "{{API_KEY}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{API_LOCAL_URL_8080}}/accounts/:account_id",
+							"host": [
+								"{{API_LOCAL_URL_8080}}"
+							],
+							"path": [
+								"accounts",
+								":account_id"
+							],
+							"variable": [
+								{
+									"key": "account_id",
+									"value": ""
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		}
+	],
+	"auth": {
+		"type": "inherit"
+	},
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	]
+}
