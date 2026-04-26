@@ -6,6 +6,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
+import jakarta.persistence.Transient;
 import lombok.Getter;
 import lombok.Setter;
 import pe.edu.pucp.microservices.transactions.enums.TransactionType;
@@ -24,6 +25,9 @@ public class Transaction {
     private TransactionType transactionType;
     private double amount;
     private LocalDateTime createdAt;
+
+    @Transient
+    private int accountPort;
 
     @PrePersist
     private void prePersist() {

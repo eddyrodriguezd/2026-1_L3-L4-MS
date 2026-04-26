@@ -12,4 +12,5 @@ public class AccountDto {
     private String userId;
     private double balance;
     private LocalDateTime createdAt;
+    private int port;
 }

@@ -6,6 +6,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
+import jakarta.persistence.Transient;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -23,6 +24,9 @@ public class Account {
     private String userId;
     private double balance;
     private LocalDateTime createdAt;
+
+    @Transient
+    private int port;
 
     @PrePersist
     private void prePersist() {

@@ -1,5 +1,6 @@
 package pe.edu.pucp.microservices.accounts.service;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import pe.edu.pucp.microservices.accounts.client.EmailClient;
 import pe.edu.pucp.microservices.accounts.client.UserClient;
@@ -17,6 +18,9 @@ public class AccountService {
     private final AccountRepository accountRepository;
     private final UserClient userClient;
     private final EmailClient emailClient;
+
+    @Value("${server.port}")
+    private int serverPort;
 
     public AccountService(AccountRepository accountRepository, UserClient userClient, EmailClient emailClient) {
         this.accountRepository = accountRepository;
@@ -37,6 +41,7 @@ public class AccountService {
             throw new Exception("Account couldn't be found");
         }
 
+        account.setPort(serverPort);
         return account;
     }
 

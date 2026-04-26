@@ -1,7 +1,8 @@
 package pe.edu.pucp.microservices.transactions.service;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import pe.edu.pucp.microservices.transactions.client.AccountClient;
+import pe.edu.pucp.microservices.transactions.client.AccountFeignClient;
 import pe.edu.pucp.microservices.transactions.dto.AccountDto;
 import pe.edu.pucp.microservices.transactions.dto.TransactionCreateDto;
 import pe.edu.pucp.microservices.transactions.dto.UpdateBalanceDto;
@@ -15,9 +16,9 @@ import java.util.List;
 public class TransactionService {
 
     private final TransactionRepository transactionRepository;
-    private final AccountClient accountClient;
+    private final AccountFeignClient accountClient;
 
-    public TransactionService(TransactionRepository transactionRepository, AccountClient accountClient) {
+    public TransactionService(TransactionRepository transactionRepository, AccountFeignClient accountClient) {
         this.transactionRepository = transactionRepository;
         this.accountClient = accountClient;
     }
@@ -51,6 +52,7 @@ public class TransactionService {
 
         // Call repository layer to save in database
         Transaction createdTransaction = transactionRepository.save(transaction);
+        createdTransaction.setAccountPort(accountDto.getPort());
 
         return createdTransaction;
     }
